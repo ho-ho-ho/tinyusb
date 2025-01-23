@@ -8,7 +8,11 @@ set(ST_CMSIS ${TOP}/hw/mcu/st/cmsis_device_${ST_FAMILY})
 set(CMSIS_5 ${TOP}/lib/CMSIS_5)
 
 # include board specific
-include(${CMAKE_CURRENT_LIST_DIR}/boards/${BOARD}/board.cmake)
+if(DEFINED BOARD_PATH)
+  include(${BOARD_PATH}/${BOARD}/board.cmake)
+else()
+  include(${CMAKE_CURRENT_LIST_DIR}/boards/${BOARD}/board.cmake)
+endif()
 
 # toolchain set up
 set(CMAKE_SYSTEM_PROCESSOR cortex-m4 CACHE INTERNAL "System Processor")
@@ -38,12 +42,12 @@ function(add_board_target BOARD_TARGET)
     ${ST_CMSIS}/Source/Templates/system_${ST_PREFIX}.c
     ${ST_HAL_DRIVER}/Src/${ST_PREFIX}_hal.c
     ${ST_HAL_DRIVER}/Src/${ST_PREFIX}_hal_cortex.c
+    ${ST_HAL_DRIVER}/Src/${ST_PREFIX}_hal_flash.c
+    ${ST_HAL_DRIVER}/Src/${ST_PREFIX}_hal_flash_ex.c
     ${ST_HAL_DRIVER}/Src/${ST_PREFIX}_hal_gpio.c
     ${ST_HAL_DRIVER}/Src/${ST_PREFIX}_hal_pwr_ex.c
     ${ST_HAL_DRIVER}/Src/${ST_PREFIX}_hal_rcc.c
     ${ST_HAL_DRIVER}/Src/${ST_PREFIX}_hal_rcc_ex.c
-    ${ST_HAL_DRIVER}/Src/${ST_PREFIX}_hal_uart.c
-    ${ST_HAL_DRIVER}/Src/${ST_PREFIX}_hal_uart_ex.c
     ${STARTUP_FILE_${CMAKE_C_COMPILER_ID}}
     )
   target_include_directories(${BOARD_TARGET} PUBLIC
@@ -90,11 +94,17 @@ function(family_configure_example TARGET RTOS)
     ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../board.c
     )
   target_include_directories(${TARGET} PUBLIC
-    # family, hw, board
+    # family, hw
     ${CMAKE_CURRENT_FUNCTION_LIST_DIR}
     ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../../
-    ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/boards/${BOARD}
     )
+
+  # board
+  if(DEFINED BOARD_PATH)
+    target_include_directories(${TARGET} PUBLIC ${BOARD_PATH}/${BOARD})
+  else()
+    target_include_directories(${TARGET} PUBLIC ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/boards/${BOARD})
+ endif()
 
   # Add TinyUSB target and port source
   family_add_tinyusb(${TARGET} OPT_MCU_STM32G4 ${RTOS})

@@ -1,0 +1,5 @@
+FreeRTOS-Kernel/
+lwip/
+CMSIS_5/
+CMSIS_6/
+sct_neopixel/
